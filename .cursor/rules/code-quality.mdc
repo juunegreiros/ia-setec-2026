@@ -1,0 +1,55 @@
+---
+description: Required reading, code quality and reporting standards for the workshop order system
+alwaysApply: true
+---
+
+# Code Quality & Working Standards
+
+## Always read before writing
+
+Before planning or writing any code, read:
+
+1. `docs/product/business-rules.md` — what the system must do. It is the source
+   of truth; if code and rules disagree, the rules win and you ask.
+2. `docs/architecture/project-standards.md` — folder structure, naming, the
+   `apps/web` vs `apps/api` split, and the rule against creating business
+   modules before their slice runs.
+3. The current slice in `docs/plan.md` (or `docs/plan.reference.md` if
+   `docs/plan.md` does not exist).
+
+## Scope
+
+- Implement only the slice you were asked for. Do not start the next one.
+- Do not touch files outside the slice's file list without asking first.
+- Do not refactor unrelated code, rename things, or "improve" what works.
+- If a rule is ambiguous or missing, stop and ask. Never fill gaps with guesses.
+
+## Code quality
+
+- Match the existing pattern in the touched area. `apps/api/apps/core` and
+  `apps/web/src/features/health` are the reference examples.
+- The frontend never talks to the database; everything goes through the API.
+- The API is the source of truth for validation and totals.
+- Money is `Decimal` in Python and a decimal string in JSON. Never `float`.
+- Keep `page.tsx` thin; logic lives in `features/` and `lib/`.
+- Every business rule you implement gets a test. Edge cases listed in the slice
+  are mandatory tests.
+- Comments explain non-obvious intent or constraints, never restate the code.
+- Code, identifiers and commit messages in English. Text shown in the UI, docs
+  and README in Brazilian Portuguese.
+
+## Done means
+
+- `make test` passes (or `python manage.py test` and `npm test` without make).
+- `make lint` is clean (ESLint + TypeScript).
+- You did not commit. The human reads the diff and commits.
+
+## Reporting
+
+End every task with a short report a person can act on without reading the
+code:
+
+- **Files changed**, each with one line on why.
+- **Tests run** and their result (the actual command and pass/fail count).
+- **Rules covered**: which business rules and edge cases (E1…E17) now have tests.
+- **Open questions** or decisions you had to make, in plain language.
