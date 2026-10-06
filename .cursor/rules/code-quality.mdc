@@ -9,13 +9,19 @@ alwaysApply: true
 
 Before planning or writing any code, read:
 
-1. `docs/product/business-rules.md` — what the system must do. It is the source
-   of truth; if code and rules disagree, the rules win and you ask.
+1. The product docs — what the system must do. They are the source of truth;
+   if code and docs disagree, the docs win and you ask. Start at
+   `docs/product/business-rules.md` (general context and the list of
+   projects), then read the project folder, e.g.
+   `docs/product/sistema-de-pedidos/`.
 2. `docs/architecture/project-standards.md` — folder structure, naming, the
    `apps/web` vs `apps/api` split, and the rule against creating business
    modules before their slice runs.
-3. The current slice in `docs/plan.md` (or `docs/plan.reference.md` if
-   `docs/plan.md` does not exist).
+3. The current slice: `docs/history/slices/<id>-*.md` (`gam-13-…` with Linear,
+   `1.1-…` without), and its Prompt section.
+
+The development flow, the skills and the Linear/local modes are described in
+`docs/workflow/`.
 
 ## Scope
 
@@ -38,11 +44,29 @@ Before planning or writing any code, read:
 - Code, identifiers and commit messages in English. Text shown in the UI, docs
   and README in Brazilian Portuguese.
 
+## Documentation and Linear
+
+- Plans live in `docs/history/plans/` and slices in `docs/history/slices/`,
+  named `<id>-<title-kebab>.md` (lowercase, no accents). With Linear, a plan is
+  a ticket and its slices are sub-issues (`gam-12-…`, `gam-13-…`); without
+  Linear, plans are numbered and slices are `<plan>.<step>` (`1-…`, `1.1-…`).
+  See `docs/workflow/modes.md`.
+- Every folder under `docs/` has an index file (`README.md`; in
+  `docs/product/`, `business-rules.md`). When you create a file there, add it
+  to that index.
+- History is not rewritten: plans get new "Histórico" lines, slices get new
+  "Execuções" entries.
+- Linear goes through the `linear` MCP server in `.cursor/mcp.json` only. Never
+  write to Linear, change a status or invent an ID without the user's explicit
+  confirmation. Rules: `docs/architecture/linear-mcp.md`.
+
 ## Done means
 
 - `make test` passes (or `python manage.py test` and `npm test` without make).
 - `make lint` is clean (ESLint + TypeScript).
-- You did not commit. The human reads the diff and commits.
+- You did not commit. The human reads the diff, stages it and runs `/commit`
+  (Conventional Commits starting with the ticket: `GAM-13 feat(api): …`).
+  Never stage files yourself.
 
 ## Reporting
 

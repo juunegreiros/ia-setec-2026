@@ -6,22 +6,33 @@ Este documento diz **como** o código é organizado. As regras de negócio (o
 ## Estrutura de pastas (monorepo)
 
 ```
-workshop-pedidos/
+ia-setec-2026/
   apps/
     api/          # Django — API REST + Django Admin
     web/          # Next.js — app que o cliente usa
   docs/
-    architecture/ # como o código é organizado (este arquivo)
-    product/      # regras de negócio
-    plan.md       # plano gerado ao vivo (não existe até o workshop)
-    plan.reference.md  # plano de referência, usado se plan.md não existir
-  prompts/        # os mesmos prompts das skills, para quem só tem chat no navegador
+    README.md     # índice da documentação
+    architecture/ # como o código é organizado (este arquivo) e o Linear via MCP
+    product/
+      business-rules.md  # contexto geral e índice dos projetos
+      <projeto>/  # regras, entidades, casos extremos de um projeto (start-project)
+    workflow/     # fluxo de desenvolvimento, skills e modos (Linear ou local)
+    history/
+      plans/      # planos: <id>-<titulo>.md (gam-12-… ou 1-…)
+      slices/     # slices e execuções: <id>-<titulo>.md (gam-13-… ou 1.1-…)
+    templates/    # modelos de plano, slice e README de projeto
+    plan.reference.md  # gabarito de slices do sistema de pedidos
+  prompts/        # como rodar as skills num chat do navegador (modo local)
   .cursor/
+    mcp.json      # servidor MCP do Linear
     rules/        # regras que o agente sempre segue
     skills/       # skills: prompts com nome, chamados com /nome-da-skill
   Makefile
   .env.example
 ```
+
+Toda pasta dentro de `docs/` tem um `README.md` que explica o que ela guarda e
+aponta para os arquivos. Quem cria um arquivo novo atualiza esse índice.
 
 ## Separação `apps/web` e `apps/api`
 

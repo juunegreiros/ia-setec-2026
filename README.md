@@ -15,6 +15,8 @@ deixa a pessoa escolher a quantidade de cada um, mostra o total, pede o nome e
 envia. A API valida e grava o pedido.
 
 As regras completas, com os casos extremos, estão em
+[`docs/product/sistema-de-pedidos/`](docs/product/sistema-de-pedidos/README.md).
+A porta de entrada da documentação de produto é
 [`docs/product/business-rules.md`](docs/product/business-rules.md).
 
 ## Stack
@@ -53,8 +55,8 @@ node --version
 ## Começando (macOS e Linux)
 
 ```bash
-git clone <url-do-repositorio> workshop-pedidos
-cd workshop-pedidos
+git clone https://github.com/juunegreiros/ia-setec-2026.git
+cd ia-setec-2026
 make setup
 ```
 
@@ -81,8 +83,8 @@ make test
 No PowerShell, na pasta do repositório:
 
 ```powershell
-git clone <url-do-repositorio> workshop-pedidos
-cd workshop-pedidos
+git clone https://github.com/juunegreiros/ia-setec-2026.git
+cd ia-setec-2026
 
 copy .env.example .env
 
@@ -167,14 +169,20 @@ apps/
     src/features/health/  # exemplo completo do padrão: api/ + components/
     src/lib/              # cliente HTTP, env, React Query, schemas Zod
 docs/
-  product/business-rules.md        # O QUE o sistema faz (fonte de verdade)
-  architecture/project-standards.md # COMO o código é organizado
-  plan.reference.md                # plano de referência, slice por slice
+  README.md                        # índice da documentação (comece aqui)
+  product/                         # O QUE o sistema faz (fonte de verdade)
+    business-rules.md              # contexto geral e índice dos projetos
+    sistema-de-pedidos/            # regras, entidades, API e casos extremos
+  architecture/                    # COMO o código é organizado + Linear via MCP
+  workflow/                        # fluxo de desenvolvimento, skills e modos
+  history/plans/, history/slices/  # planos e slices (ticket do Linear ou 1, 1.1)
+  templates/                       # modelos de plano, slice e projeto
+  plan.reference.md                # gabarito de slices do sistema de pedidos
 .cursor/
+  mcp.json                         # servidor MCP do Linear
   rules/code-quality.mdc           # regras que o agente sempre segue
-  skills/execute-slice/            # /execute-slice 1.1 — executa um slice
-  skills/orchestrate-issue/        # /orchestrate-issue 3 — subagentes por slice
-prompts/                           # os mesmos prompts, para quem só tem chat
+  skills/                          # skills: /start-project, /execute-slice, …
+prompts/                           # como rodar as skills num chat do navegador
 ```
 
 O `health` existe para haver um exemplo pequeno e completo do padrão em cada
@@ -183,16 +191,26 @@ slices imitam esses exemplos.
 
 ## Como o workshop usa este repositório
 
+O workshop segue o fluxo de skills de
+[`docs/workflow/development-flow.md`](docs/workflow/development-flow.md). Os
+exemplos abaixo usam o **modo local** (sem Linear), que funciona para todo
+mundo; com Linear, troque os números pelos IDs dos tickets.
+
 1. **Leia antes de pedir código.** As regras de negócio e os padrões já estão
    escritos em `docs/`. O agente lê esses arquivos antes de qualquer coisa.
-2. **Plano.** No modo Plan do Cursor, o agente gera `docs/plan.md` a partir das
-   regras, usando o prompt de [`prompts/01-plan.md`](prompts/01-plan.md). Se
-   algo der errado, [`docs/plan.reference.md`](docs/plan.reference.md) é o plano
-   pronto.
-3. **Um slice por vez.** `/execute-slice 1.1` no chat do agente. Ele implementa
-   só aquele slice, roda os testes e reporta. Você lê o diff e faz o commit.
-4. **Orchestrator.** `/orchestrate-issue 3` executa os três slices do app web,
-   cada um num subagente que não vê a conversa principal; só o relatório volta.
+2. **Plano.** `/start-new-plan sistema-de-pedidos "Pedidos na API"`. O agente
+   compara as regras com o código, tira dúvidas e grava
+   `docs/history/plans/1-pedidos-na-api.md`, dividido em steps. Compare com o
+   gabarito [`docs/plan.reference.md`](docs/plan.reference.md).
+3. **Especificação.** `/create-slice 1 1` (um step) ou `/create-slices 1`
+   (todos, com subagentes que só analisam). Cada slice ganha descrição,
+   critérios de aceite e o prompt que será executado, em
+   `docs/history/slices/1.1-….md`.
+4. **Um slice por vez.** `/execute-slice 1.1`. O agente lê o contexto e executa
+   o prompt do slice na própria conversa, roda os testes e registra a execução.
+   Você lê o diff, faz `git add` e roda `/commit`.
+5. **Retomar.** `/continue-plan 1` mostra o que foi feito, o que falta e o que
+   não bate entre plano, slices e código.
 
 ### Acompanhando com outra ferramenta
 
@@ -210,6 +228,36 @@ git checkout final
 ```
 
 A branch `final` tem o projeto completo, resultado do ensaio do workshop.
+
+## Usando como início de outros projetos
+
+Além do sistema de pedidos, o repositório traz um fluxo completo para começar
+um projeto seu com um agente de IA, com ou sem Linear. Sem Linear, tudo fica
+em arquivos e os IDs são locais (plano `1`, slices `1.1`, `1.2`…); veja
+[`docs/workflow/modes.md`](docs/workflow/modes.md).
+
+| Skill | O que faz |
+|-------|-----------|
+| `/start-project <url do projeto no Linear \| nome>` | Entrevista você e documenta as regras de negócio em `docs/product/<projeto>/` |
+| `/continue-project <url \| nome>` | Muda ou amplia as regras, mostrando o impacto antes |
+| `/start-new-plan <url \| nome> "<título>"` | Compara regras e código e cria um plano em steps (ticket no Linear ou plano `1`) |
+| `/continue-plan <GAM-12 \| 1>` | Resume o que foi feito e o que falta, aponta inconsistências e aplica mudanças |
+| `/create-slice <GAM-12 \| 1> <step>` | Especifica um step sem deixar lacunas: descrição, critérios de aceite e prompt |
+| `/create-slices <GAM-12 \| 1>` | Especifica todos os steps, com subagentes que só analisam |
+| `/execute-slice <GAM-13 \| 1.1>` | Executa o prompt do slice na própria conversa, roda os testes e registra a execução |
+| `/commit` | Faz o commit só do que já está staged, em Conventional Commits começando pelo ticket (`GAM-13 feat(api): …`) |
+
+Toda skill termina com um **Output**: o que foi feito, os arquivos gravados, o
+que ficou em aberto e o próximo comando.
+
+O fluxo completo, etapa por etapa: [`docs/workflow/development-flow.md`](docs/workflow/development-flow.md).
+Detalhes de cada skill: [`docs/workflow/skills.md`](docs/workflow/skills.md).
+
+**Linear.** O agente acessa o Linear pelo servidor MCP configurado em
+`.cursor/mcp.json`. No Cursor, confira em **Settings → MCP** que o servidor
+`linear` está ligado; na primeira vez, ele abre o login no navegador e você
+entra com a **sua** conta. Nenhum token fica no repositório. Mais em
+[`docs/architecture/linear-mcp.md`](docs/architecture/linear-mcp.md).
 
 ## Problemas comuns
 

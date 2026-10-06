@@ -1,76 +1,109 @@
 ---
 name: execute-slice
 description: >-
-  Implement exactly one slice of the order system plan (for example 1.1 or 2.2):
-  read the business rules, project standards and the slice, ask about
-  ambiguities, implement only that slice, run the tests and report. Use when the
-  user says execute-slice, /execute-slice, or asks to run a slice by its id.
+  Implement exactly one slice in this same conversation: take the slice ID
+  (Linear sub-issue such as GAM-13, or a local slice such as 1.1), read the
+  context, the description and the acceptance criteria, then execute the
+  slice's Prompt section, run the tests, record the execution in the spec
+  under docs/history/slices/ and report. Use when the user says
+  execute-slice, /execute-slice, or asks to implement a slice.
 disable-model-invocation: true
 ---
 
 # Execute Slice
 
-Implements **one** slice of the plan, and nothing else. The human stays in
-control: when in doubt, ask; never expand the scope.
+Implements **one** slice, and nothing else, by running the **Prompt** written
+by `/create-slice`. It always runs **in this conversation**: no subagents, no
+new chats. The human stays in control: when in doubt, ask; never expand the
+scope.
 
 ## Input
 
-Required: **slice id**, such as `1.1`, `2.2` or `3.3`.
+Required: **slice ID**. If it is missing, ask for it.
 
-If the id is missing or does not exist in the plan, stop and ask for it.
+| Input | Mode | Where the slice lives |
+|-------|------|-----------------------|
+| `GAM-13` or its Linear URL | Linear | Sub-issue in Linear + `docs/history/slices/gam-13-*.md` |
+| `1.1` | local | `docs/history/slices/1.1-*.md` |
+
+Rules: `docs/workflow/modes.md`.
 
 ## Workflow
 
 ```
-- [ ] Step 1: Read the rules and standards
-- [ ] Step 2: Find the slice in the plan
-- [ ] Step 3: Check prerequisites
-- [ ] Step 4: Ask about anything ambiguous
-- [ ] Step 5: Implement only the slice
+- [ ] Step 1: Load the slice
+- [ ] Step 2: Read the context
+- [ ] Step 3: Read the description and acceptance criteria
+- [ ] Step 4: Check prerequisites
+- [ ] Step 5: Execute the prompt
 - [ ] Step 6: Run the tests
-- [ ] Step 7: Report
+- [ ] Step 7: Record the execution
+- [ ] Step 8: Output
 ```
 
-### Step 1 — Read the rules and standards
+### Step 1 — Load the slice
 
-Read in full:
+**Linear mode:**
 
-1. `docs/product/business-rules.md`
-2. `docs/architecture/project-standards.md`
-3. The reference examples of the pattern: `apps/api/apps/core/` on the API side
-   and `apps/web/src/features/health/` plus `apps/web/src/lib/` on the web side.
+1. Read the sub-issue with the `linear` MCP server: description (sections
+   `## Descrição`, `## Critérios de aceite`, `## Prompt`), parent plan ticket,
+   project, status and comments.
+2. Open the spec file `docs/history/slices/<id>-*.md` (lowercase id).
+3. The prompt to execute is the one in the **ticket**. If the spec file's
+   prompt differs, show the difference and ask which one to follow. If the
+   ticket has no `## Prompt` section, use the spec file's.
+4. If there is no spec file, offer to create it from the ticket (template
+   `docs/templates/slice.md`) before executing: it is where the execution is
+   recorded.
+5. If the MCP does not answer, say so and ask: connect it and retry, or execute
+   from the spec file.
 
-### Step 2 — Find the slice
+**Local mode:** open `docs/history/slices/<id>-*.md`. Missing: **stop** and
+suggest `/create-slice <plan> <step>`.
 
-1. Open `docs/plan.md`. If it does not exist, open `docs/plan.reference.md` and
-   say in the report that the reference plan was used.
-2. Locate the slice by id. Extract: **scope**, **out of scope**, **files**,
-   **done when** and **edge cases** with their test names.
+In both modes: if neither a ticket nor a spec has a Prompt, **stop** and
+suggest `/create-slice`. Never implement from a title alone. If the spec
+already has an execution, ask whether this is a re-run before continuing.
 
-### Step 3 — Check prerequisites
+### Step 2 — Read the context
 
-Slices run in order (1.1 → 1.2 → 2.1 → 2.2 → 3.1 → 3.2 → 3.3). Confirm the
-previous slice exists in the code (for example, 1.2 needs the `Product` model
-from 1.1). If it does not, stop and tell the user which slice is missing.
+1. `.cursor/rules/code-quality.mdc` and `docs/architecture/project-standards.md`.
+2. The product folder linked in the spec header (`docs/product/<project>/`).
+3. The parent plan (linked in the spec header) and the slices of its earlier
+   steps, including their "Execuções" sections.
+4. Linear mode: the comments on the sub-issue and on the plan ticket.
 
-### Step 4 — Ask before guessing
+Run `git branch --show-current` and tell the user which branch you are on. Do
+not create or switch branches unless asked.
 
-Stop and ask the user if:
+### Step 3 — Read the description and acceptance criteria
 
-- the slice and the business rules disagree;
-- a rule needed by the slice is missing or can be read two ways;
-- the slice needs a file that is not in its file list.
+Tell the user, in two or three sentences, what this slice delivers and how it
+will be checked. If the description, the acceptance criteria, the product docs
+or the code contradict each other, stop and ask before executing.
 
-List the questions together, each with the option you would choose and why.
-If nothing is ambiguous, say so in one line and continue.
+### Step 4 — Check prerequisites
 
-### Step 5 — Implement only the slice
+The step may depend on earlier steps. Confirm they are implemented: their spec
+has a successful execution and the code they created exists. If not, **stop**
+and say which slice must run first.
 
-- Create or change only the files listed in the slice.
-- Follow `project-standards.md` and the reference examples.
-- Write every test named in the slice's edge case table, with those names.
+### Step 5 — Execute the prompt
+
+Follow the Prompt block as your instructions, in this conversation:
+
+- Read the files listed under `[LEIA ANTES]`.
+- Create or change only the files under `[ARQUIVOS]`.
+- Write every test under `[REGRAS E TESTES]`, with those exact names.
+- Respect `[FORA DE ESCOPO]` and `[RESTRIÇÕES]`.
 - Generate Django migrations with `makemigrations`; never write them by hand.
-- Do not commit. Do not start the next slice.
+- Do not commit. Do not start another slice.
+
+If you find a gap the prompt does not answer (a rule missing or readable two
+ways, a file not listed, a name not defined), stop and ask: all questions
+together, each with the option you would choose and why. Record each answer
+under "Decisões tomadas na especificação" in the spec, with today's date and
+"durante a execução".
 
 ### Step 6 — Run the tests
 
@@ -86,16 +119,45 @@ Without make: `cd apps/api && .venv/bin/python manage.py test` (on Windows,
 `cd apps/web && npm test && npm run lint && npm run typecheck`.
 
 If a test fails, read the full error, fix the cause and run again. If it still
-fails after two attempts, stop and report the failure with the full error.
+fails after two attempts, stop, record the failed execution (Step 7) and report
+the full error.
 
-### Step 7 — Report
+Then check each acceptance criterion and mark it as met or not.
 
-Reply with exactly these sections:
+### Step 7 — Record the execution
+
+In the spec file, replace "Ainda não executado." (or append below the previous
+entries) with:
 
 ```markdown
-## Slice X.Y — <title>
+### <AAAA-MM-DD> — <sucesso | falhou | parcial>
 
-**Plan used:** docs/plan.md | docs/plan.reference.md
+- **Branch:** <branch>
+- **Arquivos alterados:** `path` — por quê; …
+- **Testes:** `make test` — N passaram / M falharam; `make lint` — limpo | erros
+- **Critérios de aceite:** todos atendidos | <quais não>
+- **Casos cobertos:** E? — `test_name`; …
+- **Desvios do prompt:** <o que mudou e por quê, ou "nenhum">
+- **Dúvidas em aberto:** <lista ou "nenhuma">
+```
+
+On success, set the spec status to `executado`, mark the acceptance criteria
+checkboxes, update the slice's row in `docs/history/slices/README.md`, and in
+the plan file add `— executado em <AAAA-MM-DD>` to the step's `Slice:` line.
+
+Linear mode: offer to post a comment on the sub-issue with this summary. Post
+it only after approval. Never change the ticket status.
+
+## Output
+
+Always end with:
+
+```markdown
+## Slice <ID> — <title> — <success | failed | partial>
+
+**Mode:** Linear | local
+**Spec:** docs/history/slices/<file>.md
+**Branch:** <branch>
 
 **Files changed**
 - `path` — why
@@ -104,20 +166,27 @@ Reply with exactly these sections:
 - `make test` — N passed / M failed
 - `make lint` — clean | errors
 
-**Edge cases covered**
-- E? — test name
+**Acceptance criteria**
+- [x] … / [ ] … — why not
 
-**Open questions**
-- … (or "None")
+**Rules and edge cases covered**
+- R? / E? — test name
 
-**Next step for the human:** read the diff, then commit with
-`Add <what> (slice X.Y)`.
+**Deviations from the prompt:** <list or "none">
+**Open questions:** <list or "none">
+
+**Next step for the human:** read the diff, stage the files
+(`git add <paths>`) and run `/commit` (suggested message:
+`<ID> <type>(<scope>): <summary>`). Linear mode: move <ID> to the next status
+if you want; I did not change it. Next slice: `/execute-slice <next ID>`.
 ```
 
 ## Anti-patterns
 
+- Implementing without a Prompt, or from the ticket title.
+- Delegating to a subagent or a new chat: this skill runs here.
 - Implementing two slices at once, or "getting ahead" on the next one.
-- Editing files outside the slice to make something work, without asking.
+- Editing files outside `[ARQUIVOS]` to make something work, without asking.
 - Inventing a business rule the docs do not state.
-- Skipping a listed edge case test because the code "obviously" handles it.
-- Committing on the user's behalf.
+- Skipping a named test because the code "obviously" handles it.
+- Changing the Linear status or committing on the user's behalf.

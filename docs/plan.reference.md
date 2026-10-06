@@ -1,10 +1,11 @@
 # Plano de referência — Sistema de pedidos
 
-> **Para que serve este arquivo.** No workshop, o plano é gerado ao vivo a
-> partir de [`product/business-rules.md`](product/business-rules.md) e salvo em
-> `docs/plan.md`. Este arquivo é a rede de segurança: as skills leem
-> `docs/plan.md` e, se ele não existir, usam este. Compare os dois depois; as
-> diferenças são um bom exercício.
+> **Para que serve este arquivo.** Gabarito de como o sistema de pedidos pode
+> ser dividido em slices, escrito a partir de
+> [`product/sistema-de-pedidos/`](product/sistema-de-pedidos/README.md). As
+> skills não leem este arquivo: os planos de verdade ficam em
+> [`history/plans/`](history/plans/README.md). Compare o plano que o agente
+> gerar com este; as diferenças são um bom exercício.
 
 ## Como ler
 
@@ -17,14 +18,15 @@ commit). Cada slice tem:
   sinal de que o slice cresceu demais.
 - **Pronto quando**: o critério objetivo para fazer o commit.
 - **Casos extremos**: os códigos `E1`…`E17` de
-  [`business-rules.md`](product/business-rules.md#casos-extremos), cada um com
+  [`edge-cases.md`](product/sistema-de-pedidos/edge-cases.md), cada um com
   o teste que o cobre.
 
 Ordem obrigatória: 1.1 → 1.2 → 2.1 → 2.2 → 3.1 → 3.2 → 3.3. Cada slice
 depende do anterior.
 
 Todo slice termina com `make test` e `make lint` passando, o diff lido por
-inteiro e um commit no formato `Add <o quê> (slice X.Y)`.
+inteiro e um commit com `/commit`, no formato `X.Y <tipo>(<escopo>): <resumo>`
+(ex.: `1.1 feat(api): add product model and admin`).
 
 ---
 
